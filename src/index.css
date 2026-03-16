@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+::-webkit-scrollbar-corner {
+  background: #1e1e1e;
+}
+
+/* Fade in animation for autocomplete */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.12s ease-out forwards;
+}
+
+/* Range input custom styling */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #007acc;
+  cursor: pointer;
+  border: 1px solid #005a9e;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #007acc;
+  cursor: pointer;
+  border: 1px solid #005a9e;
+}
+
+/* Minimap style */
+.minimap-text {
+  font-size: 1.5px;
+  line-height: 2px;
+  letter-spacing: 0;
+}
+
+/* Toggle switch transition */
+.toggle-dot {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Code area selection */
+::selection {
+  background: #264f78;
+  color: #ffffff;
+}
+
+/* Smooth typing feel */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
