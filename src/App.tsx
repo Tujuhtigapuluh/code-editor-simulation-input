@@ -760,7 +760,7 @@ console.log(greeting);`);
           <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
           <div className="w-3 h-3 rounded-full bg-[#27ca40]"></div>
         </div>
-        <span className="flex-1 text-center text-xs font-mono text-blue-400 bg-[#252526] px-2 py-1 border-b-2 border-blue-400">VS Code</span>
+        <span className="flex-1 text-center text-xs">VS Code</span>
       </div>
 
       {/* Menu Bar */}
