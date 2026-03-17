@@ -25,6 +25,24 @@ const PauseIcon = () => (
   </svg>
 );
 
+const SoundIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+  </svg>
+);
+
+const MuteIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+  </svg>
+);
+
 // Token types for syntax highlighting
 type TokenType = 'keyword' | 'string' | 'comment' | 'number' | 'function' | 'boolean' | 'operator' | 'plain' | 'tag' | 'attribute' | 'decorator';
 
@@ -390,6 +408,12 @@ console.log(greeting);`);
   const [showAutocomplete, setShowAutocomplete] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Sound-related states
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundVolume, setSoundVolume] = useState(0.5);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioFileName, setAudioFileName] = useState<string>('');
+
   // Autocomplete state
   const [acVisible, setAcVisible] = useState(false);
   const [acSuggestions, setAcSuggestions] = useState<{ word: string; kind: string; detail: string }[]>([]);
@@ -406,11 +430,49 @@ console.log(greeting);`);
   const inputCodeRef = useRef(inputCode);
   const stopFlagRef = useRef(0);
   const showAutocompleteRef = useRef(showAutocomplete);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { typingSpeedRef.current = typingSpeed; }, [typingSpeed]);
   useEffect(() => { typoFrequencyRef.current = typoFrequency; }, [typoFrequency]);
   useEffect(() => { inputCodeRef.current = inputCode; }, [inputCode]);
   useEffect(() => { showAutocompleteRef.current = showAutocomplete; }, [showAutocomplete]);
+
+  // Initialize audio element
+  useEffect(() => {
+    if (audioUrl) {
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.loop = true;
+      audioRef.current.volume = soundVolume;
+    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [audioUrl]);
+
+  // Update volume when changed
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = soundVolume;
+    }
+  }, [soundVolume]);
+
+  // Sync sound with typing state
+  useEffect(() => {
+    if (!audioRef.current || !soundEnabled) return;
+
+    if (isTyping && !isPaused) {
+      audioRef.current.play().catch(() => {
+        // Autoplay blocked, user needs to interact first
+      });
+    } else {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  }, [isTyping, isPaused, soundEnabled]);
 
   // Cursor blink effect
   useEffect(() => {
@@ -428,6 +490,33 @@ console.log(greeting);`);
   }, [displayedCode]);
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Handle MP3 file upload
+  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'audio/mpeg') {
+      const url = URL.createObjectURL(file);
+      setAudioUrl(url);
+      setAudioFileName(file.name);
+      setSoundEnabled(true);
+    }
+  };
+
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Remove uploaded audio
+  const removeAudio = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAudioUrl(null);
+    setAudioFileName('');
+    setSoundEnabled(false);
+    audioRef.current = null;
+  };
 
   // Extract current word being typed (for autocomplete matching)
   const getCurrentWord = (text: string): string => {
@@ -753,6 +842,15 @@ console.log(greeting);`);
 
   return (
     <div className="h-screen bg-[#1e1e1e] flex flex-col overflow-hidden select-none">
+      {/* Hidden file input for audio upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/mpeg"
+        onChange={handleAudioUpload}
+        className="hidden"
+      />
+
       {/* Title Bar */}
       <div className="bg-[#323233] h-8 flex items-center px-4 text-[#cccccc] text-sm shrink-0">
         <div className="flex space-x-2 mr-4">
@@ -801,20 +899,81 @@ console.log(greeting);`);
         </div>
 
         {/* Explorer Panel */}
-        <div className={`bg-[#252526] border-r border-[#3c3c3c] flex flex-col shrink-0 transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 border-r-0'}`}>
-          <div className={`flex flex-col h-full overflow-y-auto overflow-x-hidden min-w-[256px] ${sidebarOpen ? '' : 'invisible'}`}>
+        <div className={`bg-[#252526] border-r border-[#3c3c3c] flex flex-col shrink-0 transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-72 opacity-100' : 'w-0 opacity-0 border-r-0'}`}>
+          <div className={`flex flex-col h-full overflow-y-auto overflow-x-hidden min-w-[288px] ${sidebarOpen ? '' : 'invisible'}`}>
           <div className="p-3 text-[#bbbbbb] text-[11px] uppercase tracking-wider font-semibold">Explorer</div>
 
-          {/* Input Section */}
+          {/* Input Section - NO LIMIT */}
           <div className="p-2 border-b border-[#3c3c3c]">
             <div className="text-[#cccccc] text-[11px] mb-2 uppercase font-semibold tracking-wide">📋 Paste Code Here</div>
             <textarea
               value={inputCode}
               onChange={(e) => setInputCode(e.target.value)}
               className="w-full h-36 bg-[#1e1e1e] text-[#d4d4d4] text-xs p-2 rounded border border-[#3c3c3c] focus:border-[#007acc] focus:outline-none resize-none font-mono scrollbar-thin"
-              placeholder="Paste your code here..."
+              placeholder="Paste your code here (unlimited length)..."
               disabled={isTyping}
             />
+            <div className="flex justify-between text-[#858585] text-[10px] mt-1">
+              <span>{inputCode.length.toLocaleString()} chars</span>
+              <span>{inputCode.split('\n').length.toLocaleString()} lines</span>
+            </div>
+          </div>
+
+          {/* Audio/Sound Section */}
+          <div className="p-2 space-y-2 border-b border-[#3c3c3c]">
+            <div className="text-[#cccccc] text-[11px] uppercase font-semibold tracking-wide flex items-center gap-1">
+              🔊 Typing Sound
+            </div>
+
+            {!audioUrl ? (
+              <button
+                onClick={triggerFileInput}
+                className="w-full flex items-center justify-center gap-2 bg-[#3c3c3c] hover:bg-[#505050] text-[#cccccc] px-3 py-2 rounded text-xs transition-colors"
+              >
+                <UploadIcon />
+                <span>Upload MP3 Sound</span>
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between bg-[#1e1e1e] p-2 rounded">
+                  <span className="text-[#cccccc] text-xs truncate flex-1 mr-2" title={audioFileName}>
+                    🎵 {audioFileName.length > 20 ? audioFileName.slice(0, 20) + '...' : audioFileName}
+                  </span>
+                  <button
+                    onClick={removeAudio}
+                    className="text-[#858585] hover:text-[#ff5f56] text-xs"
+                    title="Remove audio"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                      soundEnabled ? 'bg-[#007acc] text-white' : 'bg-[#3c3c3c] text-[#858585]'
+                    }`}
+                  >
+                    {soundEnabled ? <SoundIcon /> : <MuteIcon />}
+                    <span>{soundEnabled ? 'On' : 'Off'}</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#858585] text-[10px]">Vol</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={soundVolume}
+                      onChange={(e) => setSoundVolume(Number(e.target.value))}
+                      className="w-16 h-1 bg-[#3c3c3c] rounded appearance-none cursor-pointer accent-[#007acc]"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Controls */}
@@ -1063,6 +1222,7 @@ console.log(greeting);`);
                     : '✓ Ready'}
               </span>
               <span>Ln {lineCount}, Col {lastLineLength + 1}</span>
+              {soundEnabled && audioUrl && <span>🔊 Sound On</span>}
             </div>
             <div className="flex items-center space-x-4">
               <span>Spaces: 2</span>
