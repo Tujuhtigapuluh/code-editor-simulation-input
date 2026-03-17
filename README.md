@@ -76,31 +76,49 @@ Aplikasi ini menampilkan interface persis seperti VS Code dengan kemampuan auto-
 | **Decorators** | 🟡 Kuning | `@Component`, `@Injectable` |
 | **JSX Tags** | 🔵 Biru | `<div>`, `<Component />` |
 
+### 🔊 Typing Sound (MP3 Upload)
+| Fitur | Deskripsi |
+|-------|-----------|
+| **Upload Audio** | Upload file MP3/audio apapun sebagai sound efek mengetik |
+| **Sync dengan Typing** | Sound otomatis play saat Start, pause saat Pause, stop saat selesai |
+| **Volume Control** | Slider volume 0% - 100% yang bisa diubah real-time |
+| **Loop Audio** | Toggle loop agar audio berulang untuk code panjang |
+| **Remove Audio** | Hapus audio yang sudah diupload kapan saja |
+| **Status Bar Info** | Ikon 🔊/🔇 di status bar menampilkan status audio saat ini |
+| **Format Support** | Mendukung MP3, WAV, OGG, dan format audio browser lainnya |
+
 ### 🎮 Kontrol Lengkap
 | Tombol | Fungsi |
 |--------|--------|
-| ▶️ **Start** | Mulai mengetik dari awal |
-| ⏸️ **Pause** | Jeda pengetikan |
-| ▶️ **Resume** | Lanjutkan dari jeda |
-| ⏹️ **Stop** | Berhenti mengetik |
+| ▶️ **Start** | Mulai mengetik dari awal + play audio |
+| ⏸️ **Pause** | Jeda pengetikan + pause audio |
+| ▶️ **Resume** | Lanjutkan dari jeda + resume audio |
+| ⏹️ **Stop** | Berhenti mengetik + stop audio |
 | ↺ **Reset** | Reset semua ke awal |
 
 ### ⚙️ Pengaturan
 | Setting | Range | Deskripsi |
-|---------|-------|-----------|
+|---------|-------|-----------| 
 | ⚡ **Speed** | 10ms - 200ms | Kecepatan ketikan per karakter |
 | 🖊 **Typo Rate** | 0% - 20% | Persentase kemungkinan typo |
 | 💡 **IntelliSense** | On / Off | Toggle popup autocomplete |
+| 🔊 **Typing Sound** | Upload MP3 | Sound efek yang sinkron dengan typing |
+| 🔉 **Volume** | 0% - 100% | Kontrol volume audio |
+| 🔁 **Loop** | On / Off | Audio loop untuk code panjang |
 | 📄 **File Name** | Custom | Nama file yang ditampilkan di tab & breadcrumb |
 
 ### 📊 Info Tambahan
+- **Unlimited Code** — Tidak ada batasan panjang code yang bisa diketik
+- **Character & Line Counter** — Menampilkan jumlah karakter dan baris dari input code
 - **Progress Bar** — Menampilkan persentase penyelesaian
 - **Status Indicator** — Ready → Typing → Paused → Done
+- **Audio Status** — 🔊/🔇 di status bar menampilkan nama file audio yang sedang digunakan
 - **Ln/Col** — Posisi cursor (baris, kolom) real-time
 - **Language Detection** — Otomatis mendeteksi bahasa dari ekstensi file (`.tsx`, `.ts`, `.js`, `.jsx`, `.py`, `.css`, `.html`)
 - **Cursor Blinking** — Cursor berkedip realistis seperti editor asli
 - **Auto Scroll** — Otomatis scroll ke bawah saat mengetik
 - **Custom Scrollbar** — Scrollbar bergaya VS Code dark theme
+- **Toggle Sidebar** — Klik icon file untuk buka/tutup panel Explorer
 
 ---
 
@@ -128,12 +146,14 @@ npm run build
 ```
 
 ### 5. Gunakan Aplikasi
-1. **Paste code** di textarea pada panel Explorer (kiri)
-2. Atur **Speed**, **Typo Rate**, dan **IntelliSense** sesuai keinginan
-3. Ubah **File Name** jika perlu (misal: `app.tsx`, `index.js`, `main.py`)
-4. Klik tombol **▶️ Start** untuk mulai mengetik
-5. Gunakan **⏸️ Pause** untuk jeda, **⏹️ Stop** untuk berhenti
-6. Rekam layar menggunakan screen recorder favorit Anda!
+1. **Paste code** di textarea pada panel Explorer (kiri) — panjang tak terbatas!
+2. **(Opsional)** Upload file **MP3/audio** untuk efek sound mengetik
+3. Atur **Speed**, **Typo Rate**, **Volume**, dan **IntelliSense** sesuai keinginan
+4. Ubah **File Name** jika perlu (misal: `app.tsx`, `index.js`, `main.py`)
+5. Klik tombol **▶️ Start** untuk mulai mengetik (audio otomatis ikut play!)
+6. Gunakan **⏸️ Pause** untuk jeda (audio juga pause), **⏹️ Stop** untuk berhenti
+7. Saat typing selesai, audio otomatis berhenti
+8. Rekam layar menggunakan screen recorder favorit Anda!
 
 ---
 
@@ -151,19 +171,21 @@ npm run build
 ## 📁 Struktur Project
 
 ```
-auto-code-typer/
-├── public/
-├── src/
-│   ├── App.tsx          # Komponen utama aplikasi
-│   ├── main.tsx         # Entry point React
-│   └── index.css        # Tailwind CSS + custom styles
-├── index.html           # HTML template
-├── package.json         # Dependencies & scripts
-├── tsconfig.json        # TypeScript config
-├── vite.config.ts       # Vite config
-├── tailwind.config.js   # Tailwind config
-├── README.md            # Dokumentasi (file ini)
-└── LICENSE              # MIT License
+📂 nama-folder-project/
+├── 📂 .github/
+│   └── 📂 workflows/
+│       └── 📄 deploy.yml   # Workflow GitHub Actions untuk build & deploy ke GitHub Pages
+├── 📁 src/
+│   ├── 📄 App.tsx          # Komponen utama aplikasi
+│   ├── 📄 main.tsx         # Entry point React
+│   └── 📄 index.css        # Tailwind CSS + custom styles
+├── 📄 index.html           # HTML template
+├── 📄 package.json         # Dependencies & scripts
+├── 📄 tsconfig.json        # TypeScript config
+├── 📄 vite.config.ts       # Vite config
+├── 📄 tailwind.config.js   # Tailwind config
+├── 📄 README.md            # Dokumentasi (file ini)
+└── 📄 LICENSE              # MIT License
 ```
 
 ---
