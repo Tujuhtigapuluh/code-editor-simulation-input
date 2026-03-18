@@ -311,7 +311,7 @@ const HighlightedLine = ({ line }: { line: string }) => {
   );
 };
 
-// Autocomplete popup component
+// Fixed Autocomplete popup component - menggunakan position fixed
 interface AutocompleteProps {
   suggestions: { word: string; kind: string; detail: string }[];
   selectedIndex: number;
@@ -322,13 +322,32 @@ interface AutocompleteProps {
 const AutocompletePopup = ({ suggestions, selectedIndex, visible, position }: AutocompleteProps) => {
   if (!visible || suggestions.length === 0) return null;
 
+  // Calculate if popup should appear above or below cursor
+  const viewportHeight = window.innerHeight;
+  const popupHeight = Math.min(suggestions.length * 24 + 50, 270); // Estimated popup height
+  const shouldShowAbove = position.top + popupHeight > viewportHeight - 50;
+
+  const adjustedTop = shouldShowAbove 
+    ? position.top - popupHeight - 10 
+    : position.top;
+
+  // Ensure popup doesn't go off-screen horizontally
+  const viewportWidth = window.innerWidth;
+  const popupWidth = 400;
+  const adjustedLeft = Math.min(position.left, viewportWidth - popupWidth - 20);
+
   return (
     <div
-      className="absolute z-50 animate-fadeIn"
-      style={{ top: `${position.top}px`, left: `${position.left}px` }}
+      className="fixed z-[9999] pointer-events-none"
+      style={{ 
+        top: `${Math.max(adjustedTop, 10)}px`, 
+        left: `${Math.max(adjustedLeft, 10)}px`,
+        willChange: 'transform',
+        transform: 'translateZ(0)',
+      }}
     >
       {/* Main suggestions list */}
-      <div className="bg-[#252526] border border-[#454545] rounded shadow-2xl min-w-[320px] max-w-[450px] max-h-[220px] overflow-hidden">
+      <div className="bg-[#252526] border border-[#454545] rounded shadow-2xl min-w-[320px] max-w-[400px] max-h-[220px] overflow-hidden pointer-events-auto">
         <div className="overflow-y-auto max-h-[200px] py-0.5">
           {suggestions.map((item, idx) => {
             const iconInfo = SUGGESTION_ICONS[item.kind] || SUGGESTION_ICONS['variable'];
@@ -348,7 +367,7 @@ const AutocompletePopup = ({ suggestions, selectedIndex, visible, position }: Au
                 <span className={`truncate ${isSelected ? 'text-white font-medium' : iconInfo.color}`}>
                   {item.word}
                 </span>
-                <span className="ml-auto pl-4 text-[10px] text-[#808080] truncate">
+                <span className="ml-auto pl-4 text-[10px] text-[#808080] truncate max-w-[150px]">
                   {item.detail}
                 </span>
               </div>
@@ -359,8 +378,8 @@ const AutocompletePopup = ({ suggestions, selectedIndex, visible, position }: Au
 
       {/* Detail panel for selected item */}
       {suggestions[selectedIndex] && (
-        <div className="bg-[#252526] border border-[#454545] border-t-0 rounded-b px-3 py-2 min-w-[320px] max-w-[450px]">
-          <div className="text-[11px] text-[#cccccc] font-mono">
+        <div className="bg-[#252526] border border-[#454545] border-t-0 rounded-b px-3 py-2 min-w-[320px] max-w-[400px] pointer-events-auto">
+          <div className="text-[11px] text-[#cccccc] font-mono break-all">
             {suggestions[selectedIndex].detail}
           </div>
         </div>
@@ -406,6 +425,7 @@ console.log(greeting);`);
   const typingRef = useRef<boolean>(false);
   const pausedRef = useRef<boolean>(false);
   const codeDisplayRef = useRef<HTMLDivElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const currentIndexRef = useRef<number>(0);
   const displayedCodeRef = useRef<string>('');
   const typingSpeedRef = useRef(typingSpeed);
@@ -579,28 +599,47 @@ console.log(greeting);`);
     return filtered;
   };
 
-  // Calculate autocomplete popup position based on cursor position in editor
-  const calculateAcPosition = (text: string): { top: number; left: number } => {
+  // Calculate autocomplete popup position - menggunakan posisi fixed relative to viewport
+  const calculateAcPosition = useCallback((text: string): { top: number; left: number } => {
     const lines = text.split('\n');
     const lineIndex = lines.length - 1;
     const colIndex = lines[lineIndex].length;
 
     const lineHeight = 24;
-    const lineNumbersWidth = 56;
-    const paddingLeft = 16;
     const charWidth = 8.4;
 
+    // Get editor container position
     const editorEl = codeDisplayRef.current;
-    const scrollTop = editorEl ? editorEl.scrollTop : 0;
+    const containerEl = editorContainerRef.current;
+    
+    if (!editorEl || !containerEl) {
+      return { top: 100, left: 100 };
+    }
 
-    const top = (lineIndex + 1) * lineHeight - scrollTop + 2;
-    const left = lineNumbersWidth + paddingLeft + colIndex * charWidth;
+    const containerRect = containerEl.getBoundingClientRect();
+    const scrollTop = editorEl.scrollTop;
+    const scrollLeft = editorEl.scrollLeft;
 
-    return { top: Math.max(top, 0), left: Math.min(left, 400) };
-  };
+    // Line numbers width + padding
+    const lineNumbersWidth = 56;
+    const paddingLeft = 16;
+
+    // Calculate position relative to viewport
+    const relativeTop = (lineIndex + 1) * lineHeight - scrollTop;
+    const relativeLeft = lineNumbersWidth + paddingLeft + colIndex * charWidth - scrollLeft;
+
+    // Convert to fixed position (relative to viewport)
+    const top = containerRect.top + relativeTop + lineHeight + 4;
+    const left = containerRect.left + relativeLeft;
+
+    return { 
+      top: Math.max(top, containerRect.top + 20), 
+      left: Math.max(left, containerRect.left + 60)
+    };
+  }, []);
 
   // Show autocomplete with animation
-  const showAcPopup = (text: string, fullCode: string) => {
+  const showAcPopup = useCallback((text: string, fullCode: string) => {
     if (!showAutocompleteRef.current) return;
 
     const currentWord = getCurrentWord(text);
@@ -615,11 +654,11 @@ console.log(greeting);`);
     } else {
       setAcVisible(false);
     }
-  };
+  }, [calculateAcPosition]);
 
-  const hideAcPopup = () => {
+  const hideAcPopup = useCallback(() => {
     setAcVisible(false);
-  };
+  }, []);
 
   const getRandomTypo = (char: string): string => {
     const nearby: { [key: string]: string[] } = {
@@ -805,7 +844,7 @@ console.log(greeting);`);
 
     // Stop audio when typing is done
     stopAudio();
-  }, []);
+  }, [hideAcPopup, showAcPopup]);
 
   const startTyping = () => {
     if (isTyping && isPaused) {
@@ -864,6 +903,14 @@ console.log(greeting);`);
 
   return (
     <div className="h-screen bg-[#1e1e1e] flex flex-col overflow-hidden select-none">
+      {/* Autocomplete Popup - Diletakkan di level paling atas sebagai fixed element */}
+      <AutocompletePopup
+        suggestions={acSuggestions}
+        selectedIndex={acSelectedIndex}
+        visible={acVisible}
+        position={acPosition}
+      />
+
       {/* Title Bar */}
       <div className="bg-[#323233] h-8 flex items-center px-4 text-[#cccccc] text-sm shrink-0">
         <div className="flex space-x-2 mr-4">
@@ -1173,7 +1220,7 @@ console.log(greeting);`);
         </div>
 
         {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col bg-[#1e1e1e] min-w-0 relative">
+        <div ref={editorContainerRef} className="flex-1 flex flex-col bg-[#1e1e1e] min-w-0 relative overflow-hidden">
           {/* Tab Bar */}
           <div className="h-9 bg-[#252526] flex items-center border-b border-[#3c3c3c] shrink-0">
             <div className="flex items-center space-x-2 px-4 py-2 bg-[#1e1e1e] text-[#ffffff] text-xs border-t-2 border-t-[#007acc] max-w-[200px]">
@@ -1204,9 +1251,9 @@ console.log(greeting);`);
               </div>
 
               {/* Code Content */}
-              <div className="flex-1 pl-4 pr-8 text-[#d4d4d4] relative">
+              <div className="flex-1 pl-4 pr-8 text-[#d4d4d4]">
                 {lines.map((line, index) => (
-                  <div key={index} className="leading-6 whitespace-pre relative">
+                  <div key={index} className="leading-6 whitespace-pre">
                     <HighlightedLine line={line} />
                     {index === lines.length - 1 && (
                       <span
@@ -1215,14 +1262,6 @@ console.log(greeting);`);
                     )}
                   </div>
                 ))}
-
-                {/* Autocomplete Popup */}
-                <AutocompletePopup
-                  suggestions={acSuggestions}
-                  selectedIndex={acSelectedIndex}
-                  visible={acVisible}
-                  position={acPosition}
-                />
               </div>
             </div>
 
